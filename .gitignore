@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+
+# Environment Variables (Security)
+.env
+backend/.env
+
+# Databases & Backups
+*.db
+instance/
+backend/instance/
+*.sqlite
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+backend/__pycache__/
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+frontend/dist/
+dist/
