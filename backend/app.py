@@ -39,7 +39,15 @@ def get_groq_client():
 basedir = os.path.abspath(os.path.dirname(__file__))
 app = Flask(__name__)
 # Ensure the database is stored in a predictable, persistent location in the instance folder
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///' + os.path.join(basedir, 'instance', 'abe_system.db'))
+db_url = os.getenv('DATABASE_URL')
+if db_url:
+    if db_url.startswith('sqlite:///') and not db_url.startswith('sqlite:////'):
+        db_path = db_url.replace('sqlite:///', '', 1)
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, db_path)
+    else:
+        app.config['SQLALCHEMY_DATABASE_URI'] = db_url
+else:
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'instance', 'abe_system.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'super-secret-key-for-abe-project')
 
