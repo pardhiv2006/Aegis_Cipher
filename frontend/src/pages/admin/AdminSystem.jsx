@@ -61,7 +61,7 @@ const AdminSystem = () => (
           ['Database', 'SQLite + SQLAlchemy'],
           ['Auth', 'JWT + Bcrypt'],
           ['Encryption', 'Simulated CP-ABE'],
-          ['Port', 'Frontend :5173 | API :5001'],
+          ['Port', 'Frontend :5173 | API : Render'],
           ['Environment', 'Local Cluster'],
         ].map(([k, v]) => (
           <div key={k} className="p-6 rounded-2xl bg-slate-50/50 border border-white shadow-inner group hover:bg-white transition-colors">
