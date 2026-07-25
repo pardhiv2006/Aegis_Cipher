@@ -5,8 +5,6 @@ import jwt
 import datetime
 import pytz
 from functools import wraps
-from models import db, User, File, AccessLog, Role, Department, UserSession
-from abe_logic import simulate_abe_encrypt, simulate_abe_decrypt
 import os
 import io
 import google.generativeai as genai
@@ -35,10 +33,15 @@ def get_groq_client():
             print(f"Groq Init Error: {e}")
     return None
 
-# Database Configuration with Persistent Path
-basedir = os.path.abspath(os.path.dirname(__file__))
+# ==========================================
+# STARTUP LIFECYCLE
+# ==========================================
+
+# 1. Create Flask app
 app = Flask(__name__)
-# Ensure the database is stored in a predictable, persistent location in the instance folder
+
+# 2. Configure database
+basedir = os.path.abspath(os.path.dirname(__file__))
 db_url = os.getenv('DATABASE_URL')
 if db_url:
     if db_url.startswith('sqlite:///') and not db_url.startswith('sqlite:////'):
@@ -48,16 +51,30 @@ if db_url:
         app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 else:
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'instance', 'abe_system.db')
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'super-secret-key-for-abe-project')
 
-# Ensure instance folder exists
-if not os.path.exists(os.path.join(basedir, 'instance')):
-    os.makedirs(os.path.join(basedir, 'instance'))
+# Ensure SQLite parent directory exists before connection
+if app.config['SQLALCHEMY_DATABASE_URI'].startswith('sqlite:///'):
+    sqlite_path = app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:////', '/', 1).replace('sqlite:///', '', 1)
+    if not os.path.isabs(sqlite_path):
+        sqlite_path = os.path.abspath(os.path.join(basedir, sqlite_path))
+    db_dir = os.path.dirname(sqlite_path)
+    if db_dir and not os.path.exists(db_dir):
+        os.makedirs(db_dir, exist_ok=True)
 
+# 3. Initialize SQLAlchemy
+from models import db
+db.init_app(app)
+
+# 4. Import all models
+from models import User, File, AccessLog, Role, Department, UserSession
+from abe_logic import simulate_abe_encrypt, simulate_abe_decrypt
+
+# 5. Initialize extensions
 CORS(app, supports_credentials=True, expose_headers=["x-access-token"], allow_headers=["Content-Type", "x-access-token"])
 bcrypt = Bcrypt(app)
-db.init_app(app)
 
 # JWT Decorator
 def token_required(f):
@@ -709,10 +726,8 @@ def seed_data():
             ))
     db.session.commit()
 
-    # 3. File Repository (Only populate if File table is empty)
-    if File.query.first():
-        return
-    
+    # 3. File Repository (Only populate missing files)
+    existing_files = {f.file_name for f in File.query.all()}
     depts = ['AI', 'CSE', 'Civil', 'Mechanical']
 
     # --- 1. STUDENT ROLE FILES ---
@@ -725,15 +740,17 @@ def seed_data():
     ]
     for dept in depts:
         for t_key, t_name, desc in student_files:
-            db.session.add(File(
-                file_name=f"{dept}_{t_name}.pdf",
-                file_type='PDF',
-                file_category='Student Resources',
-                encrypted_content=simulate_abe_encrypt(generate_student_content(dept, t_key)),
-                role_access='Student',
-                department_access=dept,
-                access_level='Basic'
-            ))
+            f_name = f"{dept}_{t_name}.pdf"
+            if f_name not in existing_files:
+                db.session.add(File(
+                    file_name=f_name,
+                    file_type='PDF',
+                    file_category='Student Resources',
+                    encrypted_content=simulate_abe_encrypt(generate_student_content(dept, t_key)),
+                    role_access='Student',
+                    department_access=dept,
+                    access_level='Basic'
+                ))
 
     # --- 2. FACULTY ROLE FILES ---
     faculty_files = [
@@ -745,15 +762,17 @@ def seed_data():
     ]
     for dept in depts:
         for t_key, t_name, desc in faculty_files:
-            db.session.add(File(
-                file_name=f"{dept}_{t_name}.pdf",
-                file_type='PDF',
-                file_category='Faculty Documents',
-                encrypted_content=simulate_abe_encrypt(generate_faculty_content(dept, t_key)),
-                role_access='Faculty',
-                department_access=dept,
-                access_level='Premium'
-            ))
+            f_name = f"{dept}_{t_name}.pdf"
+            if f_name not in existing_files:
+                db.session.add(File(
+                    file_name=f_name,
+                    file_type='PDF',
+                    file_category='Faculty Documents',
+                    encrypted_content=simulate_abe_encrypt(generate_faculty_content(dept, t_key)),
+                    role_access='Faculty',
+                    department_access=dept,
+                    access_level='Premium'
+                ))
 
     # --- 3. LAB ASSISTANT ROLE FILES ---
     lab_files = [
@@ -765,15 +784,17 @@ def seed_data():
     ]
     for dept in depts:
         for t_key, t_name, desc in lab_files:
-            db.session.add(File(
-                file_name=f"{dept}_{t_name}.pdf",
-                file_type='PDF',
-                file_category='Laboratory Assets',
-                encrypted_content=simulate_abe_encrypt(generate_lab_content(dept, t_key if t_key != 'Maintenance' else 'Health')),
-                role_access='Lab Assistant',
-                department_access=dept,
-                access_level='Basic'
-            ))
+            f_name = f"{dept}_{t_name}.pdf"
+            if f_name not in existing_files:
+                db.session.add(File(
+                    file_name=f_name,
+                    file_type='PDF',
+                    file_category='Laboratory Assets',
+                    encrypted_content=simulate_abe_encrypt(generate_lab_content(dept, t_key if t_key != 'Maintenance' else 'Health')),
+                    role_access='Lab Assistant',
+                    department_access=dept,
+                    access_level='Basic'
+                ))
 
     # --- 4. HOD ROLE FILES ---
     hod_files = [
@@ -794,15 +815,17 @@ def seed_data():
             if t_key == 'Staff': c_key = 'Strategy'
             if t_key == 'Meetings': c_key = 'Performance'
             
-            db.session.add(File(
-                file_name=f"{dept}_{t_name}.pdf",
-                file_type='PDF',
-                file_category='Management Records',
-                encrypted_content=simulate_abe_encrypt(generate_hod_content(dept, c_key)),
-                role_access='HOD',
-                department_access=dept,
-                access_level='Full'
-            ))
+            f_name = f"{dept}_{t_name}.pdf"
+            if f_name not in existing_files:
+                db.session.add(File(
+                    file_name=f_name,
+                    file_type='PDF',
+                    file_category='Management Records',
+                    encrypted_content=simulate_abe_encrypt(generate_hod_content(dept, c_key)),
+                    role_access='HOD',
+                    department_access=dept,
+                    access_level='Full'
+                ))
 
     # --- 5. ADMIN FILES (Last 5) ---
     admin_files = [
@@ -813,15 +836,16 @@ def seed_data():
         ('Database_Backup', 'Database_Backup.pdf', 'Database backups')
     ]
     for t_key, t_name, desc in admin_files:
-        db.session.add(File(
-            file_name=t_name,
-            file_type='PDF',
-            file_category='System Infrastructure',
-            encrypted_content=simulate_abe_encrypt(generate_admin_content(t_key)),
-            role_access='Admin',
-            department_access='AI',
-            access_level='Full'
-        ))
+        if t_name not in existing_files:
+            db.session.add(File(
+                file_name=t_name,
+                file_type='PDF',
+                file_category='System Infrastructure',
+                encrypted_content=simulate_abe_encrypt(generate_admin_content(t_key)),
+                role_access='Admin',
+                department_access='AI',
+                access_level='Full'
+            ))
 
     db.session.commit()
 
