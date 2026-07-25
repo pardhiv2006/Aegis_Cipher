@@ -709,10 +709,9 @@ def seed_data():
             ))
     db.session.commit()
 
-    # 3. File Repository (EXACT 101 FILES ORDER - REFRESHED)
-    File.query.delete()
-    AccessLog.query.delete()
-    db.session.commit()
+    # 3. File Repository (Only populate if File table is empty)
+    if File.query.first():
+        return
     
     depts = ['AI', 'CSE', 'Civil', 'Mechanical']
 
@@ -826,8 +825,10 @@ def seed_data():
 
     db.session.commit()
 
+# Initialize and seed database for both gunicorn and python app.py executions
+with app.app_context():
+    db.create_all()
+    seed_data()
+
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-        seed_data()
     app.run(debug=True, port=5001)
