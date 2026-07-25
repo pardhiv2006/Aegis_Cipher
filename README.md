@@ -23,21 +23,31 @@ A premium, full-stack cybersecurity platform demonstrating the power of **Attrib
 
 ## ⚡ Quick Start
 
-### 1. Unified Setup
-From the project root directory, run the consolidated installation and startup command:
-```bash
-# Install all dependencies and sync requirements
-npm run install:all
+First time setup:
 
-# Launch the entire ecosystem (Frontend + Backend)
-npm run dev
+1. Clone repository
+
+2. Install dependencies:
+
+Frontend:
+```bash
+npm install
 ```
 
-### 2. Manual Configuration
-Ensure you have your `.env` file configured in the `/backend` directory with the following keys:
-```env
-GROQ_API_KEY=your_key_here
-GEMINI_API_KEY=your_key_here
+Backend:
+```bash
+pip install -r requirements.txt
+```
+
+3. Copy environment templates:
+
+* `frontend/.env.example` → `frontend/.env`
+* `backend/.env.example` → `backend/.env`
+
+4. Start:
+
+```bash
+npm run dev
 ```
 
 ## 🔄 Security Workflow
