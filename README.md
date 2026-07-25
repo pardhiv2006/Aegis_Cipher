@@ -5,7 +5,7 @@ A premium, full-stack cybersecurity platform demonstrating the power of **Attrib
 ## 🚀 Key Features
 - **Master Identity Matrix**: Secure registration and authentication with complex attribute bindings (Role + Department).
 - **Simulated ABE Core**: Advanced cryptographic logic simulating real-world Attribute-Based Encryption for data fragments.
-- **AEGIS Security AI**: Integrated LLM interpretation (Groq/Gemini) that transforms raw document metrics into sophisticated **narrative reports**, providing instant, human-readable analysis without tabular placeholders.
+- **AEGIS Security AI**: Integrated LLM interpretation (Groq/Gemini) that transforms raw document metrics into sophisticated **narrative reports**, providing instant, human-readable analysis.
 - **Encrypted PDF Exports**: Dynamic PDF generation engine that embeds identity signatures and AI summaries directly into secure exports.
 - **Real-Time Audit Stream**: Comprehensive logging of every decryption attempt, providing a live feed of granted vs. restricted access.
 - **Premium Cinematic UI**: A futuristic, glassmorphism-based interface built with React, Tailwind CSS, and Framer Motion.
