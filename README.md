@@ -2,6 +2,8 @@
 
 A premium, full-stack cybersecurity platform demonstrating the power of **Attribute-Based Encryption (ABE)** and **AI-Driven Security Analysis**. This project provides a high-fidelity administrative interface for managing sensitive document clusters with granular, policy-based access control.
 
+**🌐 Live Demo Website:** [aegis-cipher-pardhu.vercel.app](https://aegis-cipher-pardhu.vercel.app/)
+
 ## 🚀 Key Features
 - **Master Identity Matrix**: Secure registration and authentication with complex attribute bindings (Role + Department).
 - **Simulated ABE Core**: Advanced cryptographic logic simulating real-world Attribute-Based Encryption for data fragments.
